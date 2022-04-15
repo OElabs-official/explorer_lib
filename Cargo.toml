@@ -1,0 +1,13 @@
+[package]
+name = "explorer_lib"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# 本crate指为rust 提供一个功能丰富的文件资源管理器
+# 尤其是递归文件夹浏览
+# 以RwLock实现
+
+[dependencies]
+tokio = { version = "1.17.0", features = ["full"] }
