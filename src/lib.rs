@@ -14,17 +14,21 @@ mod tests {
     {
         let v = super::Explorer::new
         (
-            std::path::PathBuf::from("/run/media/akitsuki/cz430/photos/")
+            std::path::PathBuf::from("/run/media/akitsuki/Windows/Users/lstsw/Videos/Captures")
         )?;
         // println!("{:?}",v);
         let mut matchs = super::MatchBy::default(); matchs.extensions=Some(super::EXT_PHOTOS);
         let v1 = v.match_files(matchs)?;
         println!("{:?}",v1);
-        for i0 in v1
+        for i0 in v1.iter()
         {
             if let super::PathType::File(a, _b)=i0
             {
                 if !a.is_file(){panic!("not exist!")}
+                else
+                {
+                    println!("{:?}",i0.get_path())
+                }
             }
         }
         Ok(())
@@ -76,7 +80,7 @@ impl PathType
         Ok(v0)
     }    
 
-    fn get_rel_path(&self)->PathBuf
+    pub fn get_path(&self)->PathBuf
     {
         match  self 
         {
@@ -123,7 +127,7 @@ impl Explorer
     }
     fn recursion_read_dir(full_path:&PathBuf) -> Result<(PathType,u64),Box<dyn Error>>
     {
-        println!("loc: {:?}",full_path);
+        // println!("loc: {:?}",full_path);
         let mut output = PathType::read_dir(full_path.clone())?;
         let mut len0 = 0u64;
         for i0 in output.iter_mut()
@@ -163,7 +167,7 @@ impl Explorer
         let mut output = vec![];
         for i0 in self.0.iter()
         {
-            let mut i0_abs_path = self.1.clone();i0_abs_path.push(i0.get_rel_path());
+            let mut i0_abs_path = self.1.clone();i0_abs_path.push(i0.get_path());
             output.append(&mut Explorer::recursion_match(i0_abs_path, i0.clone(), matchs)?)
         }
         Ok(output)
@@ -177,7 +181,7 @@ impl Explorer
             {
                 for i0 in inner
                 {
-                    let mut i0_abs_path = abs_path.clone();i0_abs_path.push(i0.get_rel_path());
+                    let mut i0_abs_path = abs_path.clone();i0_abs_path.push(i0.get_path());
                     output.append(&mut Explorer::recursion_match(i0_abs_path,i0,matchs)?)
                 }
             },
@@ -207,7 +211,7 @@ impl Explorer
 */
 
 
-pub const EXT_PHOTOS : &'static[&'static str]  = &["jpg","bmp","heif","avif","tiff","png","jp2","webp",];
+pub const EXT_PHOTOS : &'static[&'static str]  = &["jpg","bmp","heif","avif","tiff","png","jp2","webp","heic","gif","pnm","dds","tga","exr","ico"];
 pub const EXT_VIDEOS : &'static[&'static str]  = &["avi","mkv","mp4","wmv","ts","rmvb"];
 pub const EXT_AUDIOS : &'static[&'static str]  = &["mp3","aac","ape","flac"];
 pub const EXT_DOCUMENTS : &'static[&'static str]  = &["xls","doc","ppt","odt","pdf"];
