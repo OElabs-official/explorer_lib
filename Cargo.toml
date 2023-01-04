@@ -10,4 +10,7 @@ edition = "2021"
 # 以RwLock实现
 
 [dependencies]
-#tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.17.0", features = ["full"] }
+serde = { version = "*", features = ["derive"] }
+actix-web = "*"
+serde_json = "*"

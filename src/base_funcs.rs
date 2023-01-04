@@ -95,16 +95,43 @@ impl Explorer
                 PathType::File(path,metadata )=>
                 {   
                     let size = metadata.get_size();
-                    {}//ext
+
+                    if let Some(exts) = filter.extensions
+                    {
+                        let extension = path.extension().unwrap_or_default()
+                        .to_os_string().to_str().unwrap_or("").to_lowercase();
+                        let mut pop = true;
+                        for i0 in exts
+                        {
+                            if *i0==extension.as_str(){pop = false;break;}
+                            {// dbg
+                                // println!{"ext {} compare with {}\n pop:{}",i0,extension,pop}
+                            }
+                        }
+                        if pop {return Ok(Some((size,true)))}
+
+                    }//ext 文件名扩展，如果启用，则只筛出符合条件的文件
                     {
                         // println!("{:?},{}",path,size); //ok
                         let [min,max] = filter.size_range;
                         if let Some(min) = min{if size < min{return Ok(Some((size,true)))}}
                         if let Some(max) = max{if size > max{return Ok(Some((size,true)))}}
                     }//size
-                    {}//name
-                    {}//time
-                    {}//readonly
+                    {
+
+                    }//name
+                    {
+                        let [t0,t1,t2,t3,t4,t5] = filter.time;
+                        if let Some(min) = t0{if metadata.modified < min{return Ok(Some((size,true)))}}
+                        if let Some(max) = t1{if metadata.modified > max{return Ok(Some((size,true)))}}
+                        if let Some(min) = t2{if metadata.accessed < min{return Ok(Some((size,true)))}}
+                        if let Some(max) = t3{if metadata.accessed > max{return Ok(Some((size,true)))}}
+                        if let Some(min) = t4{if metadata.created < min{return Ok(Some((size,true)))}}
+                        if let Some(max) = t5{if metadata.created > max{return Ok(Some((size,true)))}}
+                    }//time
+                    {
+
+                    }//readonly
                 },
                 PathType::SymLink(_path)=>
                 {
@@ -114,7 +141,7 @@ impl Explorer
                     {}//readonly                    
                 }
             }
-            Ok(None)
+            Ok(None) //None 时表示符合所有规则
         }
 
         let mut remove_size = 0;
@@ -139,7 +166,7 @@ impl Explorer
     }
 
     pub fn same_name_finder(&self)->Result<(),Box<dyn Error>>
-    {//使用hashset比对同名文件
+    {//使用hashmap比对同名文件
         Ok(())
     }
 
@@ -165,8 +192,11 @@ fn f0()->Result<(),Box<dyn Error>>
 fn f2()->Result<(),Box<dyn Error>>
 {
     let mut x = Explorer::new("/home/oelabs/Downloads/darktable_exported/")?;
-    println!("{:?}",x);
-    let mut filter = Filter::default();filter.size_range=[(Some(50000000)),None];
+    // println!("{:?}",x);
+    let mut filter = Filter::default();
+    // filter.size_range=[(Some(50000000)),None];
+    // filter.extensions=Some(&["jpeg"]);
+    filter.extensions=Some(&["avif"]);
     x.filter(&filter)?;
     let x2 = x.flatten()?;
     println!("{:?}",x);
