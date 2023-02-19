@@ -7,9 +7,10 @@ use
         fs,fmt,
     },
 };
-mod core;
-mod base_funcs;
+pub mod core;
+pub mod base_funcs;
 pub mod apis;
+pub mod video_compress;
 
 pub const EXT_PHOTOS : &'static[&'static str]  = &["jpg","bmp","heif","avif","tiff","png","jp2","webp","heic","gif","pnm","dds","tga","exr","ico"];
 pub const EXT_VIDEOS : &'static[&'static str]  = &["avi","mkv","mp4","wmv","ts","rmvb"];
