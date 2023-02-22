@@ -10,9 +10,19 @@ use
         path::{PathBuf,Path,},
         fs,fmt,
     },
-    crate::core::{Explorer,PathType,Err0}
+    crate::core::{Explorer,PathType,Err0},
+    serde::{Serialize,Deserialize}
 };
 
+#[derive(Serialize,Deserialize,Clone)]
+pub struct Table
+(Vec<   (PathBuf, PathBuf, u64, (SystemTime, SystemTime, SystemTime))  >);
+impl Table 
+{   // 对Vec操作的继承
+    fn new()->Self{Self(vec![])}    
+    fn push(& mut self,value: (PathBuf, PathBuf, u64, (SystemTime, SystemTime, SystemTime))){self.0.push(value)} 
+    fn append(&mut self,other:&mut Self){self.0.append(&mut other.0)}
+}
 
 #[derive(Clone,Copy)]
 pub struct Filter<'a>
@@ -32,8 +42,52 @@ impl Explorer
     /*
     flatten 平铺，以一维向量方式输出所有文件名（绝对路径）
     filter 过滤，只保留符合条件的文件
-    classfication 
+    export_table  Adzanced flatten 输出表
+
+    TODO classfication 
+    TODO same_name_finder
+
     */
+    pub fn export_table(&self)-> Result< 
+        Table,
+        // Vec
+        // < 
+        //     (PathBuf, PathBuf, u64, (SystemTime, SystemTime, SystemTime))   
+        // >,
+        Box<dyn Error>>
+    {
+        fn recursion(abs_path:PathBuf, part:PathType)-> Result<Table, Box<dyn Error>>
+        {
+            let mut output = Table::new();
+            match part
+            {
+                PathType::KnowDir(_path, inner,_size)=>
+                {
+                    for i0 in inner
+                    {
+                        let mut i0_abs_path = abs_path.clone();i0_abs_path.push(i0.get_path());
+                        output.append(&mut recursion(i0_abs_path,i0)?)
+                    }
+                },
+                PathType::File(i0_file_name, i0_metadata)=>
+                {
+                    output.push((abs_path,i0_file_name,i0_metadata.get_size(),i0_metadata.get_times()))
+                },
+                PathType::SymLink(_path)=>{},
+                PathType::Dir(_path)=>{return Err(Box::new(Err0::new("why a not readed dir here")));}
+            }
+            Ok(output)
+        }
+
+        let mut output = Table::new();
+        for i0 in self.1.iter()
+        {
+            let mut i0_abs_path = self.0.clone();i0_abs_path.push(i0.get_path());
+            output.append(&mut recursion(i0_abs_path, i0.clone())?)
+        }
+        Ok(output)
+    }
+
     pub fn flatten(&self)->Result<Vec<PathBuf>,Box<dyn Error>>
     {// 展开为绝对路径
 
@@ -174,7 +228,8 @@ impl Explorer
 
 
 
-//----------------------------------------------------------------
+//----------------------------------------------------------------Test
+//----------------------------------------------------------------Test
 #[test]
 fn f0()->Result<(),Box<dyn Error>>
 {
