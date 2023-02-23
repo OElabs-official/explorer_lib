@@ -1,3 +1,4 @@
+
 /// 提供的功能
 ///     Filter 使用 filter方法筛选符合条件的文件
 /// 
@@ -16,13 +17,14 @@ use
 
 #[derive(Serialize,Deserialize,Clone)]
 pub struct Table
-(Vec<   (PathBuf, PathBuf, u64, (SystemTime, SystemTime, SystemTime))  >);
+(pub Vec<   (PathBuf, PathBuf, u64, SystemTime, SystemTime, SystemTime)  >);
 impl Table 
 {   // 对Vec操作的继承
     fn new()->Self{Self(vec![])}    
-    fn push(& mut self,value: (PathBuf, PathBuf, u64, (SystemTime, SystemTime, SystemTime))){self.0.push(value)} 
+    fn push(& mut self,value: (PathBuf, PathBuf, u64, SystemTime, SystemTime, SystemTime)){self.0.push(value)} 
     fn append(&mut self,other:&mut Self){self.0.append(&mut other.0)}
 }
+
 
 #[derive(Clone,Copy)]
 pub struct Filter<'a>
@@ -37,6 +39,18 @@ pub struct Filter<'a>
 
 impl <'a> Default for Filter<'a>{fn default()->Self{Self{extensions:None,size_range:[None;2],name_slice:None,time:[None;6],read_only:false,symlink:false}}}
 
+#[test]
+fn  文件名排序和重复文件名查找() -> Result<(),Box<dyn Error>> //ok
+{
+    let exp0 = Explorer::new("/home/oelabs/Documents/OP GAME/OP GAME/H PHOTO/")?;
+    let x = exp0.find_same_name_file()?;
+    for i0 in x.0
+    {
+        println!("{:?}",i0.1);
+    }
+    Ok(())
+}
+
 impl Explorer
 {
     /*
@@ -48,6 +62,27 @@ impl Explorer
     TODO same_name_finder
 
     */
+    pub fn find_same_name_file(&self)->Result<Table,Box<dyn Error>>
+    {
+        let mut output = Table::new();
+        let mut full_table = self.export_table()?;
+        full_table.0.sort_by_key(|x|x.1.clone());
+        let n_files = full_table.0.len();
+        let mut n0 = 1;
+        let mut multi_dupl = 0;
+        while n0 < n_files 
+        {
+            if  full_table.0[n0].1 == full_table.0[n0-1].1
+            {
+                if multi_dupl == 0 { output.push(full_table.0[n0-1].clone()) } //第一次重复时插入首位
+                multi_dupl += 1;
+                output.push(full_table.0[n0].clone());
+                n0 +=1;
+            }   else {multi_dupl = 0; n0 +=1}
+        }
+        Ok(output)
+    }
+
     pub fn export_table(&self)-> Result< 
         Table,
         // Vec
@@ -70,8 +105,9 @@ impl Explorer
                     }
                 },
                 PathType::File(i0_file_name, i0_metadata)=>
-                {
-                    output.push((abs_path,i0_file_name,i0_metadata.get_size(),i0_metadata.get_times()))
+                {   
+                    let itimes = i0_metadata.get_times();
+                    output.push((abs_path, i0_file_name, i0_metadata.get_size(), itimes.0,itimes.1,itimes.2))
                 },
                 PathType::SymLink(_path)=>{},
                 PathType::Dir(_path)=>{return Err(Box::new(Err0::new("why a not readed dir here")));}
